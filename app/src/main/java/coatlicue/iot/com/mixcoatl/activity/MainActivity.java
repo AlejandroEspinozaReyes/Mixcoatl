@@ -1,6 +1,10 @@
 package coatlicue.iot.com.mixcoatl.activity;
 
+import android.content.Intent;
 import android.databinding.DataBindingUtil;
+import android.nfc.NdefMessage;
+import android.nfc.NfcAdapter;
+import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -38,6 +42,34 @@ public class MainActivity extends AppCompatActivity implements LockCallback, Lig
         mBinding.setLock(mLock);
         mBinding.setLightCallback(this);
         mBinding.setLockCallback(this);
+
+        if (getIntent().getParcelableExtra(NfcAdapter.EXTRA_TAG) != null) {
+            processNdefTag(getIntent());
+        } else if (getIntent().getParcelableExtra(NfcAdapter.EXTRA_NDEF_MESSAGES) != null) {
+            processNdefTag(getIntent());
+        } else if (getIntent().getParcelableExtra(NfcAdapter.EXTRA_ID) != null) {
+            processNdefTag(getIntent());
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        processNdefTag(intent);
+    }
+
+    private void processNdefTag(Intent intent) {
+        if (intent != null && NfcAdapter.ACTION_NDEF_DISCOVERED.equals(intent.getAction())) {
+            Parcelable[] rawMessages = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
+            if (rawMessages != null) {
+                for (int i = 0; i < rawMessages.length; i++) {
+                    NdefMessage message = (NdefMessage) rawMessages[i];
+                    System.out.println("NFC: EXTRA_TAG " +
+                            new String(message.getRecords()[0].getPayload()));
+                    // TODO: Define tag and manage detection
+                }
+            }
+        }
     }
 
     @Override
