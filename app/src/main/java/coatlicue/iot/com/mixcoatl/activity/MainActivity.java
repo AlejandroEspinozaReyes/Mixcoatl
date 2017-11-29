@@ -42,7 +42,11 @@ public class MainActivity extends AppCompatActivity implements LockCallback, Lig
         mBinding.setLock(mLock);
         mBinding.setLightCallback(this);
         mBinding.setLockCallback(this);
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
         if (getIntent().getParcelableExtra(NfcAdapter.EXTRA_TAG) != null) {
             processNdefTag(getIntent());
         } else if (getIntent().getParcelableExtra(NfcAdapter.EXTRA_NDEF_MESSAGES) != null) {
@@ -64,9 +68,15 @@ public class MainActivity extends AppCompatActivity implements LockCallback, Lig
             if (rawMessages != null) {
                 for (int i = 0; i < rawMessages.length; i++) {
                     NdefMessage message = (NdefMessage) rawMessages[i];
-                    System.out.println("NFC: EXTRA_TAG " +
-                            new String(message.getRecords()[0].getPayload()));
-                    // TODO: Define tag and manage detection
+                    String payload = new String(message.getRecords()[0].getPayload());
+
+                    System.out.println("NFC: EXTRA_TAG " + payload);
+
+                    if (payload.contains("SWITCH")) {
+                        changeLightState();
+                    } else if (payload.contains("LOCK")) {
+                        changeLockState();
+                    }
                 }
             }
         }
