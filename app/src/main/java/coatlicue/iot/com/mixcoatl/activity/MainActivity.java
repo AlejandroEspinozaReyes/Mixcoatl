@@ -9,6 +9,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import coatlicue.iot.com.mixcoatl.api.LightManager;
 import coatlicue.iot.com.mixcoatl.callback.LockCallback;
 import coatlicue.iot.com.mixcoatl.models.Light;
@@ -26,11 +29,14 @@ public class MainActivity extends AppCompatActivity implements LockCallback, Lig
 
     ActivityMainBinding mBinding;
 
+    private static final Long REFRESH_RATE_IN_MILLIS = 1000l;
     private Light mLight;
     private Lock mLock;
 
     private Call<Boolean> mLightRequest;
+    private Call<Boolean> mRefreshRequest;
     private Call<Integer> mLockRequest;
+    private Timer mTimer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +48,7 @@ public class MainActivity extends AppCompatActivity implements LockCallback, Lig
         mBinding.setLock(mLock);
         mBinding.setLightCallback(this);
         mBinding.setLockCallback(this);
+        mTimer = new Timer();
     }
 
     @Override
@@ -54,12 +61,42 @@ public class MainActivity extends AppCompatActivity implements LockCallback, Lig
         } else if (getIntent().getParcelableExtra(NfcAdapter.EXTRA_ID) != null) {
             processNdefTag(getIntent());
         }
+
+        refreshSwitchState();
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         processNdefTag(intent);
+    }
+
+    private void refreshSwitchState() {
+        if (mRefreshRequest != null && !mRefreshRequest.isCanceled() && !mRefreshRequest.isExecuted()) {
+            return;
+        }
+
+        mRefreshRequest = LightManager.getState(new Callback<Boolean>() {
+            @Override
+            public void onResponse(Call<Boolean> call, Response<Boolean> response) {
+                updateLightState(response.body());
+                rescheduleRefresh();
+            }
+
+            @Override
+            public void onFailure(Call<Boolean> call, Throwable t) {
+                Log.e(MainActivity.class.getCanonicalName(), t.getMessage());
+                rescheduleRefresh();
+            }
+        });
+    }
+
+    private void rescheduleRefresh() {
+        mTimer.schedule(new TimerTask() {
+            public void run() {
+                refreshSwitchState();
+            }
+        }, REFRESH_RATE_IN_MILLIS);
     }
 
     private void processNdefTag(Intent intent) {
@@ -93,6 +130,15 @@ public class MainActivity extends AppCompatActivity implements LockCallback, Lig
         if (mLockRequest != null && !mLockRequest.isCanceled() && !mLockRequest.isExecuted()) {
             mLockRequest.cancel();
             mLockRequest = null;
+        }
+
+        if (mRefreshRequest != null && !mRefreshRequest.isCanceled() && !mRefreshRequest.isExecuted()) {
+            mRefreshRequest.cancel();
+            mRefreshRequest = null;
+        }
+
+        if (mTimer != null) {
+            mTimer.cancel();
         }
     }
 

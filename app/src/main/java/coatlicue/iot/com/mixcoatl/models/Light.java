@@ -6,7 +6,7 @@ import android.databinding.Bindable;
 import coatlicue.iot.com.mixcoatl.BR;
 
 public class Light extends BaseObservable {
-    private Boolean state;
+    private boolean state;
 
     public Light() {
         this.state = false;
@@ -17,7 +17,7 @@ public class Light extends BaseObservable {
         return state;
     }
 
-    public void setState(Boolean state) {
+    public void setState(boolean state) {
         if (this.state != state) {
             this.state = state;
             notifyPropertyChanged(BR.state);

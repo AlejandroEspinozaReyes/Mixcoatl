@@ -13,8 +13,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class APIManager {
-    //private static final String API_BASE_URL = "http://192.168.1.70:8080/RaspberryHouse/rest/";
-    private static final String API_BASE_URL = "http://192.168.1.70:8080/RaspberryHouse/rest/";
+    private static final String API_BASE_URL = "http://172.20.140.2:8080/Quetzalcoatl/iot/";
     private static OkHttpClient client;
     private static Retrofit mRetrofit;
     private static Gson mGson = new GsonBuilder().create();
